@@ -12,3 +12,10 @@ Each SDN is analyzed for its address, nationality, and citizenship, and prescrib
   1. If you want to use httpster: `npm install -g httpster`
   2. When you're inside the project directory, run `httpster`.
   3. Navigate your web browser to `localhost:3333`.
+
+### Some Important Notes
+1. This project was made for a coding challenge with limited time, so many optimizations have not been made.
+2. I believe this data would be better represented as a bar graph than a pie chart since SDNs may be associated with more than one country.
+3. Please forgive my brevity in code cleanup :P
+
+##### This project was made using wonderful tools such as [d3.js](http://d3js.org), [underscore.js](http://underscorejs.org), and [bootstrap](http://getbootstrap.com).
