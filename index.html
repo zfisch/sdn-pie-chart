@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+  <meta charset="utf-8">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="./main.css">
+    <title>SDNs by Country</title>
+  </head>
+  <body>
+    <div class="main-container container">
+      <div class="row">
+        <div class="chart-container col-lg-8">
+          <h1 class="text-center">Specially Designated Nationals List (SDN) by Country</h1>
+          <div class="pie-chart"></div>
+          <p>*Note: The data for this graph was collected from the <a href="http://www.treasury.gov/ofac/downloads/sdn.xml">Office of Foreign Asset Control website</a>.</p>
+          <p>Each SDN was analyzed for address, nationality, and citizenship. Country associations were prescribed such that each SDN could only be associated with a given country one time, though an SDN might be associated with multiple countries. Furthermore, country association percentages were determined as a fraction of single country associations to total country associations.</p>
+        </div>
+        <div class="data-table-container col-lg-4">
+          <div class="data-table" id="table"></div>
+        </div>
+      </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
+    <script>
+
+      d3.xml("sdn.xml", function(error, data) {
+
+        if (error) throw error;
+
+
+        //////////////////////////////////////////////////////////
+        //                Data Parsing Logic                    //
+        //////////////////////////////////////////////////////////
+
+        /*
+          The countryOccurrences object will store each country that is associated with
+          an SDN and the total number of SDNs associated with that country. The
+          totalCountryAssociations value represents the total number of country associations
+          for all SDN entries.
+        */
+        var countryOccurrences = {};
+        var totalCountryAssociations = 0;
+
+        /*
+          sdnEntries is an array of SDN nodes, one for each entry.
+          Note that querySelectorAll returns a NodeList rather than a proper array,
+          so I use map.call to invoke array methods.
+        */
+        var sdnEntries = [].map.call(data.querySelectorAll('sdnEntry'), function(entry){
+          return entry;
+        });
+
+        /*
+          findAttribute is a generalized getter to gather a specific attribute from a node.
+          It is generalized so we can gather any information from a node, even though for this
+          exercise we'll just be gathering country associations. The function gathers all
+          of the instances of an attribute on a node, or returns an empty array if none exist.
+          Note that _.uniq is used to prevent duplicates.
+        */
+        var findAttribute = function(node, attributeAsString){
+          return _.uniq([].map.call(node.querySelectorAll(attributeAsString), function(attribute){
+            return attribute.textContent;
+          }));
+        };
+
+        /*
+          For each SDN node in sdnEntries, we must find all of the countries associated with
+          that node, and increment the value for that country in the countryOccurences object.
+          If an entry has no country association, we increment 'undetermined'. Every time we
+          increment a value, we also increment the total number of country associations.
+        */
+        _.each(sdnEntries, function(sdn){
+          var sdnCountries = findAttribute(sdn, 'country');
+          if (sdnCountries.length === 0) {
+            if (!countryOccurrences.hasOwnProperty('Undetermined')) {
+              countryOccurrences['Undetermined'] = 1;
+            } else {
+              countryOccurrences['Undetermined']++;
+            }
+            totalCountryAssociations++;
+          } else {
+            sdnCountries.forEach(function(country){
+              if(!countryOccurrences.hasOwnProperty(country)){
+                countryOccurrences[country] = 1;
+              } else {
+                countryOccurrences[country]++;
+              }
+              totalCountryAssociations++;
+            });
+          }
+        });
+
+        /*
+          There are over 150 countries represented in the data, most of which only represent
+          a fraction of a percent of the total SDN country associations. I chose to group
+          countries together based on their percent total in order to clean up the pie chart
+          and make the data more readable. After all, who wants to eat 1/239487th of a pie?
+         */
+
+        var countriesWithLessThanOnePercent = {
+          "country": "Countries representing <1%",
+          "percentTotal": 0,
+          "countries": []
+        };
+
+        var countriesWithOneToThreePercent = {
+          "country": "Countries representing 1-3%",
+          "percentTotal": 0,
+          "countries": []
+        };
+
+        var percentTotalsPerCountry = [];
+
+        _.each(countryOccurrences, function(occurrences, country, list){
+          var percentTotal = (occurrences / totalCountryAssociations) * 100;
+          if (percentTotal < 1) {
+            countriesWithLessThanOnePercent.percentTotal += percentTotal;
+            countriesWithLessThanOnePercent.countries.push(country);
+          } else if (percentTotal <= 3) {
+            countriesWithOneToThreePercent.percentTotal += percentTotal;
+            countriesWithOneToThreePercent.countries.push(country);
+          } else {
+            percentTotalsPerCountry.push({
+              "country": country,
+              "percentTotal": (occurrences / totalCountryAssociations) * 100,
+              "countries": [country]
+            });
+          }
+        });
+
+        percentTotalsPerCountry.push(countriesWithLessThanOnePercent, countriesWithOneToThreePercent);
+
+
+        //////////////////////////////////////////////////////////
+        //                Pie Graph Logic                       //
+        //////////////////////////////////////////////////////////
+
+        var width = 700;
+        var height = 700;
+        var radius = Math.min(width, height) / 2;;
+        //Built in color picker
+        var color = d3.scale.category10();
+
+        //Append an SVG to the body, and set it's width and height.
+        //Then, append a g container and move its center to the center of the SVG.
+        var vis = d3.select(".pie-chart")
+          .append("svg:svg")
+          .data([percentTotalsPerCountry])
+            .attr("width", width)
+            .attr("height", height)
+          .append("svg:g")
+            .attr("transform", "translate(" + radius + "," + radius + ")");
+
+        var arc = d3.svg.arc()
+          .outerRadius(radius);
+        var pie = d3.layout.pie()
+          .value(function(d) { return d.percentTotal; });
+        var arcs = vis.selectAll("g.slice")
+          .data(pie)
+          .enter()
+          .append("svg:g")
+            .attr("class", "slice")
+            .on("click", function(d, i){
+              //Create an array of table data representing the selected slice
+              //to pass to the tabulate function. Tabulate will append a data table
+              //onto the page with the given data.
+              clearBox("table");
+              var tableData = d.data.countries.map(function(country){
+                return {
+                  "country": country,
+                  "percentTotal": (Math.round((countryOccurrences[country] / totalCountryAssociations) * 10000) / 100) + '%'
+                };
+              });
+
+              tabulate(tableData, ["Country", "Percent"]);
+            });
+          arcs.append("svg:path")
+            .attr("fill", function(d, i) { return color(i); })
+            .attr("d", arc);
+          arcs.append("svg:text")
+            .attr("transform", function(d) {
+              d.innerRadius = 0;
+              d.outerRadius = radius;
+              return "translate(" + arc.centroid(d) + ")";
+            })
+            .attr("text-anchor", "middle")
+            .text(function(d, i) { return percentTotalsPerCountry[i].country; });
+
+      });
+
+
+      //////////////////////////////////////////////////////////
+      //                Table Data Logic                      //
+      //////////////////////////////////////////////////////////
+
+
+      var tabulate = function(data, columns) {
+        var table = d3.select(".data-table").append("table")
+          .attr("class", "table table-bordered table-hover");
+        var thead = table.append("thead");
+        var tbody = table.append("tbody");
+
+        // Append the header row
+        thead.append("tr")
+          .selectAll("th")
+          .data(columns)
+          .enter()
+          .append("th")
+            .text(function(column) { return column; });
+
+        // Create a row for each object in the data
+        var rows = tbody.selectAll("tr")
+          .data(data)
+          .enter()
+          .append("tr");
+
+        // Create a cell in each row for each column
+        var cells = rows.selectAll("td")
+          .data(function(row) {
+            return columns.map(function(column) {
+              if (column === "Country") {
+                return {column: column, value: row.country};
+              } else {
+                return {column: column, value: row.percentTotal};
+              }
+            });
+          })
+          .enter()
+          .append("td")
+            .html(function(d) { return d.value; });
+        return table;
+      };
+
+      //Convenience method for emptying the contents of an HTML element.
+      //In this program, it's used to clear the table before a new one
+      //is appended to the page.
+      var clearBox = function(elementID) {
+        document.getElementById(elementID).innerHTML = "";
+      };
+
+    </script>
+  </body>
+</html>

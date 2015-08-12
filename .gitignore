@@ -1,0 +1,11 @@
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+#Custom gitignore
+.DS_Store
