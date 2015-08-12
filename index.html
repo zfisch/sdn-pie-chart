@@ -9,17 +9,17 @@
   </head>
   <body>
     <div class="main-container container">
+      <h1 class="text-center">Specially Designated Nationals List (SDN) by Country</h1>
       <div class="row">
         <div class="chart-container col-lg-8">
-          <h1 class="text-center">Specially Designated Nationals List (SDN) by Country</h1>
           <div class="pie-chart"></div>
-          <p>*Note: The data for this chart is collected from the <a href="http://www.treasury.gov/ofac/downloads/sdn.xml">Office of Foreign Asset Control website</a>.</p>
-          <p>Each SDN is analyzed for its address, nationality, and citizenship, and prescribed associations with countries accordingly. Each SDN may only be associated with a given country one time, though it may be associated with multiple countries. Country association percentages are determined by dividing the number of a single country's associations with SDN's by the number of all country associations with SDN's.</p>
         </div>
         <div class="data-table-container col-lg-4">
           <div class="data-table" id="table"></div>
         </div>
       </div>
+      <p>*Note: The data for this chart is collected from the <a href="http://www.treasury.gov/ofac/downloads/sdn.xml">Office of Foreign Asset Control website</a>.</p>
+      <p>Each SDN is analyzed for its address, nationality, and citizenship, and prescribed associations with countries accordingly. Each SDN may only be associated with a given country one time, though it may be associated with multiple countries. Country association percentages are determined by dividing the number of a single country's associations with SDN's by the number of all country associations with SDN's.</p>
     </div>
     <script src="./d3.min.js"></script>
     <script src="./underscore.min.js"></script>
@@ -138,8 +138,8 @@
         //////////////////////////////////////////////////////////
 
 
-        var width = 700;
-        var height = 700;
+        var width = 500;
+        var height = 500;
         var radius = Math.min(width, height) / 2;;
         //Built in color picker.
         var color = d3.scale.category10();
@@ -190,6 +190,7 @@
             return "translate(" + arc.centroid(d) + ")";
           })
           .attr("text-anchor", "middle")
+          .attr("font-size", "12px")
           .text(function(d, i) { return percentTotalsPerCountry[i].country; });
 
       });

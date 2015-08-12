@@ -1,14 +1,18 @@
 
 h1 {
-  margin-bottom: 20px;
+  margin-bottom: 60px;
 }
 
 .pie-chart {
-  margin-bottom: 20px;
+  margin-bottom: 60px;
+}
+
+.data-table {
+  height: 500px;
+  overflow: auto;
 }
 
 table {
-  margin-top: 80px;
   font-size: 12px;
 }
 
