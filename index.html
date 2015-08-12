@@ -13,8 +13,8 @@
         <div class="chart-container col-lg-8">
           <h1 class="text-center">Specially Designated Nationals List (SDN) by Country</h1>
           <div class="pie-chart"></div>
-          <p>*Note: The data for this graph was collected from the <a href="http://www.treasury.gov/ofac/downloads/sdn.xml">Office of Foreign Asset Control website</a>.</p>
-          <p>Each SDN was analyzed for address, nationality, and citizenship. Country associations were prescribed such that each SDN could only be associated with a given country one time, though an SDN might be associated with multiple countries. Furthermore, country association percentages were determined as a fraction of single country associations to total country associations.</p>
+          <p>*Note: The data for this graph is collected from the <a href="http://www.treasury.gov/ofac/downloads/sdn.xml">Office of Foreign Asset Control website</a>.</p>
+          <p>Each SDN is analyzed for its address, nationality, and citizenship, and prescribed associations with countries accordingly. Each SDN may only be associated with a given country one time, though it may be associated with multiple countries. Country association percentages are determined by dividing the number of a single country's associations with SDN's by the number of all country associations with SDN's.</p>
         </div>
         <div class="data-table-container col-lg-4">
           <div class="data-table" id="table"></div>
@@ -68,7 +68,7 @@
         /*
           For each SDN node in sdnEntries, we must find all of the countries associated with
           that node, and increment the value for that country in the countryOccurences object.
-          If an entry has no country association, we increment 'undetermined'. Every time we
+          If an entry has no country association, we increment 'Undetermined'. Every time we
           increment a value, we also increment the total number of country associations.
         */
         _.each(sdnEntries, function(sdn){
@@ -137,10 +137,11 @@
         //                Pie Graph Logic                       //
         //////////////////////////////////////////////////////////
 
+
         var width = 700;
         var height = 700;
         var radius = Math.min(width, height) / 2;;
-        //Built in color picker
+        //Built in color picker.
         var color = d3.scale.category10();
 
         //Append an SVG to the body, and set it's width and height.
@@ -163,46 +164,50 @@
           .append("svg:g")
             .attr("class", "slice")
             .on("click", function(d, i){
+
+              //Remove any existing table data from the page.
+              clearBox("table");
+
               //Create an array of table data representing the selected slice
               //to pass to the tabulate function. Tabulate will append a data table
               //onto the page with the given data.
-              clearBox("table");
               var tableData = d.data.countries.map(function(country){
                 return {
                   "country": country,
                   "percentTotal": (Math.round((countryOccurrences[country] / totalCountryAssociations) * 10000) / 100) + '%'
                 };
               });
-
               tabulate(tableData, ["Country", "Percent"]);
+
             });
-          arcs.append("svg:path")
-            .attr("fill", function(d, i) { return color(i); })
-            .attr("d", arc);
-          arcs.append("svg:text")
-            .attr("transform", function(d) {
-              d.innerRadius = 0;
-              d.outerRadius = radius;
-              return "translate(" + arc.centroid(d) + ")";
-            })
-            .attr("text-anchor", "middle")
-            .text(function(d, i) { return percentTotalsPerCountry[i].country; });
+        arcs.append("svg:path")
+          .attr("fill", function(d, i) { return color(i); })
+          .attr("d", arc);
+        arcs.append("svg:text")
+          .attr("transform", function(d) {
+            d.innerRadius = 0;
+            d.outerRadius = radius;
+            return "translate(" + arc.centroid(d) + ")";
+          })
+          .attr("text-anchor", "middle")
+          .text(function(d, i) { return percentTotalsPerCountry[i].country; });
 
       });
 
 
       //////////////////////////////////////////////////////////
-      //                Table Data Logic                      //
+      //                Data Table Logic                      //
       //////////////////////////////////////////////////////////
 
-
+      //Tabulate creates a table to display the data for a given section of the
+      //pie, then appends it to the page.
       var tabulate = function(data, columns) {
         var table = d3.select(".data-table").append("table")
           .attr("class", "table table-bordered table-hover");
         var thead = table.append("thead");
         var tbody = table.append("tbody");
 
-        // Append the header row
+        //Append the header row to the table.
         thead.append("tr")
           .selectAll("th")
           .data(columns)
@@ -210,13 +215,13 @@
           .append("th")
             .text(function(column) { return column; });
 
-        // Create a row for each object in the data
+        //Create a row for each object in the data.
         var rows = tbody.selectAll("tr")
           .data(data)
           .enter()
           .append("tr");
 
-        // Create a cell in each row for each column
+        //Create a cell in each row for each column.
         var cells = rows.selectAll("td")
           .data(function(row) {
             return columns.map(function(column) {
